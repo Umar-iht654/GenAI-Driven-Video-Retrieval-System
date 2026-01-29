@@ -1,0 +1,42 @@
+# ----------------------
+# Python
+# ----------------------
+backend/.venv/
+__pycache__/
+*.pyc
+
+# ----------------------
+# Node / React
+# ----------------------
+frontend/node_modules/
+frontend/dist/
+
+# ----------------------
+# Environment variables / secrets
+# ----------------------
+.env
+backend/.env
+frontend/.env
+
+# ----------------------
+# Data files (DO NOT COMMIT)
+# ----------------------
+data/
+*.mp4
+*.vtt
+*.srt
+*.wav
+
+# ----------------------
+# Vector indexes / caches
+# ----------------------
+*.faiss
+*.index
+*.pkl
+
+# ----------------------
+# OS / editor junk
+# ----------------------
+.DS_Store
+Thumbs.db
+.vscode/
