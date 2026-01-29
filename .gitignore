@@ -1,42 +1,28 @@
-# ----------------------
-# Python
-# ----------------------
+# Python venv (both Backend and backend)
+.venv/
+Backend/.venv/
 backend/.venv/
-__pycache__/
-*.pyc
 
-# ----------------------
 # Node / React
-# ----------------------
+Frontend/node_modules/
 frontend/node_modules/
+Frontend/dist/
 frontend/dist/
 
-# ----------------------
-# Environment variables / secrets
-# ----------------------
+# Env files
 .env
+Backend/.env
 backend/.env
+Frontend/.env
 frontend/.env
 
-# ----------------------
-# Data files (DO NOT COMMIT)
-# ----------------------
+# Data (keep local)
+Data/
 data/
 *.mp4
 *.vtt
 *.srt
-*.wav
 
-# ----------------------
-# Vector indexes / caches
-# ----------------------
-*.faiss
-*.index
-*.pkl
-
-# ----------------------
-# OS / editor junk
-# ----------------------
-.DS_Store
-Thumbs.db
-.vscode/
+# Python caches
+__pycache__/
+*.pyc
