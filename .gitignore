@@ -23,6 +23,14 @@ data/
 *.vtt
 *.srt
 
+# FAISS index files
+Data/faiss/
+*.faiss
+
 # Python caches
 __pycache__/
 *.pyc
+
+# OS files
+.DS_Store
+Thumbs.db
