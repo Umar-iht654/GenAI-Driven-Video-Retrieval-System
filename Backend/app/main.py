@@ -142,8 +142,6 @@ def ask_question(request: AskRequest):
         ]
     }
 
-
-
 @app.get("/db-test")
 def db_test():
     return {"collections": db.list_collection_names()}
