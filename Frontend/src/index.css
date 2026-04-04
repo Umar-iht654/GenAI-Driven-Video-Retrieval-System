@@ -1,0 +1,95 @@
+/* Define global theme variables, typography, colours, and page-wide defaults */
+:root {
+  color-scheme: dark;
+  --bg: #050505;
+  --bg-deep: #111114;
+  --sidebar: #0d0d10;
+  --sidebar-text: #f5f5f6;
+  --sidebar-muted: rgba(245, 245, 246, 0.6);
+  --panel: #151518;
+  --assistant-bubble: rgba(29, 29, 33, 0.96);
+  --user-bubble: #292930;
+  --text: #e9e9eb;
+  --text-strong: #ffffff;
+  --muted: #9d9da6;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent: #8d8d94;
+  --accent-dark: #696972;
+  --shadow: 0 24px 50px rgba(0, 0, 0, 0.35);
+  --font-body: 'Trebuchet MS', 'Gill Sans', sans-serif;
+  --font-display: Georgia, 'Times New Roman', serif;
+  font-family: var(--font-body);
+  line-height: 1.5;
+  font-weight: 400;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.05), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.03), transparent 24%),
+    linear-gradient(135deg, var(--bg), var(--bg-deep));
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Make width and height calculations more predictable for all elements */
+* {
+  box-sizing: border-box;
+}
+
+/* Ensure the HTML element can stretch to full height */
+html {
+  min-height: 100%;
+}
+
+/* Remove default browser margins and make the page fill the screen */
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: transparent;
+}
+
+/* Apply the body font to buttons and inputs so the UI feels consistent */
+body,
+button,
+input {
+  font-family: var(--font-body);
+}
+
+/* Make buttons and inputs inherit the current font settings */
+button,
+input {
+  font: inherit;
+}
+
+/* Ensure the React root container fills the full page height */
+#root {
+  min-height: 100vh;
+}
+
+/* Reset heading margins and make headings use the stronger text colour */
+h1,
+h2 {
+  margin: 0;
+  color: var(--text-strong);
+}
+
+/* Give the main page heading a larger display-style appearance */
+h1 {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 1.05;
+  letter-spacing: -0.03em;
+}
+
+/* Set a smaller consistent size for section headings */
+h2 {
+  font-size: 1rem;
+}
+
+/* Remove default paragraph margins for tighter layout control */
+p {
+  margin: 0;
+}

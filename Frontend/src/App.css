@@ -1,0 +1,473 @@
+/* Create the overall page layout with a fixed-width sidebar and flexible main panel */
+.app-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 20px;
+  padding: 20px;
+}
+
+/* Apply shared border, shadow, and blur effects to the sidebar and chat panel */
+.sidebar,
+.chat-panel {
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(16px);
+}
+
+/* Style the sidebar as a vertical panel with spacing, rounded corners, and layered dark background */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  border-radius: 28px;
+  padding: 24px 20px;
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.06), transparent 30%),
+    linear-gradient(180deg, rgba(15, 15, 17, 0.98), rgba(10, 10, 12, 0.95)),
+    var(--sidebar);
+  color: var(--sidebar-text);
+}
+
+/* Arrange the top area of the sidebar vertically with space between elements */
+.sidebar__top {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Make each sidebar section flexible so it can grow and scroll properly */
+.sidebar__section {
+  min-height: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+/* Apply uppercase, spaced lettering and small size to labels and micro-headings */
+.sidebar__eyebrow,
+.chat-window__eyebrow,
+.sidebar__heading,
+.message__label {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+}
+
+/* Use muted text colour for sidebar section labels and headings */
+.sidebar__eyebrow,
+.sidebar__heading {
+  color: var(--sidebar-muted);
+}
+
+/* Give interactive buttons shared rounded styling and hover transitions */
+.sidebar__new-chat,
+.input-box__submit,
+.timestamp-card__button {
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+/* Style the New Chat button with a dark gradient, bold text, and inset highlight */
+.sidebar__new-chat {
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #35353b, #232328);
+  color: var(--text-strong);
+  font-weight: 700;
+  text-align: left;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Lift action buttons slightly on hover to make them feel responsive */
+.sidebar__new-chat:hover,
+.input-box__submit:hover,
+.timestamp-card__button:hover {
+  transform: translateY(-1px);
+}
+
+/* Remove list styling and make chat history a vertical scrollable stack of items */
+.sidebar__history {
+  list-style: none;
+  padding: 0;
+  margin: 14px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+}
+
+/* Style each chat history entry as a clickable card with border, padding, and hover effects */
+.sidebar__history-item {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+  color: inherit;
+  padding: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+/* Slightly raise and brighten a chat card when hovered */
+.sidebar__history-item:hover {
+  transform: translateY(-1px);
+  border-color: var(--border-strong);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Highlight the currently selected chat entry with stronger border and background */
+.sidebar__history-item--active {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: linear-gradient(180deg, rgba(54, 54, 60, 0.9), rgba(31, 31, 35, 0.94));
+}
+
+/* Make the main chat title inside a history item bold */
+.sidebar__history-item span {
+  font-weight: 700;
+}
+
+/* Use muted colour and comfortable line-height for history previews */
+.sidebar__history-item small {
+  color: var(--sidebar-muted);
+  line-height: 1.45;
+}
+
+/* Style the main chat panel as a full-height rounded flex container with layered dark background */
+.chat-panel {
+  min-height: calc(100vh - 40px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.04), transparent 24%),
+    linear-gradient(180deg, rgba(22, 22, 24, 0.98), rgba(13, 13, 15, 0.98));
+}
+
+/* Make the chat window a vertical flex container that can grow inside the panel */
+.chat-window {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Style the chat header with spacing and a bottom divider */
+.chat-window__header {
+  padding: 30px 32px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Use muted colour for the small heading above the main chat title */
+.chat-window__eyebrow {
+  color: var(--muted);
+}
+
+/* Add spacing above and below the main chat title */
+.chat-window__header h1 {
+  margin: 10px 0 8px;
+}
+
+/* Constrain the subtitle width and style it with muted text colour */
+.chat-window__subtitle {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+}
+
+/* Make the messages area scrollable and stack messages from top to bottom */
+.chat-window__messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Center and style the empty-state card shown before any messages are sent */
+.chat-window__empty {
+  margin: auto;
+  max-width: 520px;
+  padding: 32px;
+  text-align: center;
+  border: 1px dashed var(--border-strong);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Style the empty-state title prominently */
+.chat-window__empty-title {
+  margin: 0 0 10px;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+/* Use a vertical layout for each message block */
+.message {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Align user messages to the right and limit their max width */
+.message--user {
+  align-self: flex-end;
+  max-width: min(720px, 100%);
+}
+
+/* Allow assistant messages to be wider than user messages */
+.message--assistant {
+  max-width: min(920px, 100%);
+}
+
+/* Use muted text for small message labels like USER or AI RESPONSE */
+.message__label {
+  color: var(--muted);
+}
+
+/* Style each message bubble with rounded corners, border, and subtle internal highlight */
+.message__bubble {
+  border-radius: 24px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+/* Give user bubbles a darker gradient style */
+.message__bubble--user {
+  background: linear-gradient(135deg, rgba(43, 43, 49, 0.96), rgba(31, 31, 36, 0.96));
+}
+
+/* Give assistant bubbles the assistant-specific background colour */
+.message__bubble--assistant {
+  background: var(--assistant-bubble);
+}
+
+/* Use a red-tinted bubble style for backend or request errors */
+.message__bubble--error {
+  border-color: rgba(180, 78, 78, 0.45);
+  background: linear-gradient(180deg, rgba(57, 24, 24, 0.94), rgba(35, 18, 18, 0.98));
+}
+
+/* Add spacing and divider lines between sections inside assistant responses */
+.message__section + .message__section {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+}
+
+/* Style section headings such as Answer, Summary, and Relevant Timestamps */
+.message__section h2 {
+  margin: 0 0 10px;
+  font-size: 0.98rem;
+  letter-spacing: 0.03em;
+}
+
+/* Style paragraph text inside messages so it wraps and preserves line breaks nicely */
+.message__section p,
+.message__bubble p {
+  margin: 0;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+/* Use muted colour for secondary explanatory text */
+.message__muted {
+  color: var(--muted);
+}
+
+/* Add left padding so the animated loading dot has room to appear */
+.message__loading {
+  position: relative;
+  padding-left: 22px;
+}
+
+/* Draw and animate the pulsing loading dot before the loading text */
+.message__loading::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  transform: translateY(-50%);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Arrange timestamp cards in a vertical grid with gaps */
+.timestamp-list {
+  display: grid;
+  gap: 12px;
+}
+
+/* Style each timestamp item as a flexible card with spacing and border */
+.timestamp-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Make the timestamp title bold and stronger in colour */
+.timestamp-card__title {
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+/* Use muted text for the displayed time range */
+.timestamp-card__time {
+  color: var(--muted);
+}
+
+/* Style the timestamp action button with border, padding, and subtle dark background */
+.timestamp-card__button {
+  padding: 11px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-strong);
+  font-weight: 700;
+  border: 1px solid var(--border);
+}
+
+/* Style the bottom input region with padding, top divider, and dark background */
+.input-box {
+  padding: 18px 24px 24px;
+  border-top: 1px solid var(--border);
+  background: rgba(11, 11, 13, 0.92);
+}
+
+/* Lay out the input and submit button side by side */
+.input-box__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+/* Style the text input field with padding, border, dark background, and readable text */
+.input-box__field {
+  width: 100%;
+  min-width: 0;
+  padding: 15px 18px;
+  border-radius: 18px;
+  border: 1px solid var(--border-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+}
+
+/* Make placeholder text more muted so it does not compete with typed text */
+.input-box__field::placeholder {
+  color: var(--muted);
+}
+
+/* Add a visible focus state when the user clicks into the input field */
+.input-box__field:focus {
+  outline: 2px solid rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.26);
+}
+
+/* Style the submit button with padding, dark gradient, and bold text */
+.input-box__submit {
+  padding: 0 22px;
+  background: linear-gradient(135deg, #4a4a50, #2c2c31);
+  color: var(--text-strong);
+  font-weight: 700;
+}
+
+/* Reduce opacity and disable interaction for disabled controls */
+.input-box__submit:disabled,
+.input-box__field:disabled,
+.timestamp-card__button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Style the small helper note shown underneath the input form */
+.input-box__hint {
+  margin: 10px 2px 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+/* Animate the loading dot so it pulses smoothly */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(-50%) scale(0.92);
+  }
+
+  50% {
+    opacity: 1;
+    transform: translateY(-50%) scale(1.15);
+  }
+}
+
+/* Switch to a single-column layout on medium screens so the sidebar stacks above the chat area */
+@media (max-width: 960px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .chat-panel {
+    min-height: 75vh;
+  }
+
+  .sidebar {
+    gap: 20px;
+  }
+}
+
+/* Reduce padding, radius, and reflow some layouts on smaller screens for better mobile usability */
+@media (max-width: 640px) {
+  .app-shell {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .sidebar,
+  .chat-panel {
+    border-radius: 24px;
+  }
+
+  .chat-window__header,
+  .chat-window__messages,
+  .input-box {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .input-box__form {
+    grid-template-columns: 1fr;
+  }
+
+  .input-box__submit {
+    min-height: 48px;
+  }
+
+  .timestamp-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
