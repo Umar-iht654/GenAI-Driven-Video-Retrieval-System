@@ -1,14 +1,11 @@
-from dotenv import load_dotenv
-import os
-from openai import OpenAI
+from app.embeddingFactory import get_single_embedding_function
 
-load_dotenv()
 
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+def main():
+    embedding_function = get_single_embedding_function("openai")
+    embedding = embedding_function("Hello world")
+    print(len(embedding))
 
-response = client.embeddings.create(
-    model="text-embedding-3-small",
-    input="Hello world"
-)
 
-print(len(response.data[0].embedding))
+if __name__ == "__main__":
+    main()

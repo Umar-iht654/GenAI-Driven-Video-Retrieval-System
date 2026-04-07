@@ -1,23 +1,32 @@
+import argparse
+
 from app.embeddingFactory import get_single_embedding_function
 
 
-sample_text = "Supervised learning uses labelled data to train a model."
+def main():
+    parser = argparse.ArgumentParser(
+        description="Smoke-test one embedding provider with a sample text."
+    )
+    parser.add_argument(
+        "--provider",
+        choices=["local", "openai"],
+        default="local",
+        help="Embedding provider to test",
+    )
+    parser.add_argument(
+        "--text",
+        default="Supervised learning uses labelled data to train a model.",
+        help="Sample text to embed",
+    )
+    args = parser.parse_args()
+
+    embedding_function = get_single_embedding_function(args.provider)
+    embedding = embedding_function(args.text)
+
+    print(args.provider.upper())
+    print(f"Length: {len(embedding)}")
+    print(f"First 10 values: {embedding[:10]}")
 
 
-# Test local embeddings
-local_embedding_function = get_single_embedding_function("local")
-local_embedding = local_embedding_function(sample_text)
-
-print("LOCAL EMBEDDING")
-print(f"Length: {len(local_embedding)}")
-print(f"First 10 values: {local_embedding[:10]}")
-print()
-
-
-# Test OpenAI embeddings
-openai_embedding_function = get_single_embedding_function("openai")
-openai_embedding = openai_embedding_function(sample_text)
-
-print("OPENAI EMBEDDING")
-print(f"Length: {len(openai_embedding)}")
-print(f"First 10 values: {openai_embedding[:10]}")
+if __name__ == "__main__":
+    main()

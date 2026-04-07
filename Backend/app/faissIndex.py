@@ -4,20 +4,29 @@ import numpy as np
 import faiss
 
 
+def normalize_faiss_vectors(vectors: np.ndarray) -> np.ndarray:
+    normalized_vectors = np.array(vectors, dtype="float32", copy=True)
+
+    if normalized_vectors.ndim != 2 or normalized_vectors.size == 0:
+        return normalized_vectors
+
+    # Unit-normalize vectors so inner product becomes cosine-similarity-equivalent
+    faiss.normalize_L2(normalized_vectors)
+    return normalized_vectors
+
+
 # Build a FAISS index from embeddings
 def build_faiss_index(embeddings: list[list[float]]):
 
     # Convert the list of embeddings into a NumPy array
     # FAISS requires vectors in NumPy format and specifically float32
-    vectors = np.array(embeddings, dtype="float32")
+    vectors = normalize_faiss_vectors(np.array(embeddings, dtype="float32"))
 
     # Get the dimension (size) of each embedding vector
     dimension = vectors.shape[1]
 
-    # Create a FAISS index using L2 distance (Euclidean distance)
-    # IndexFlatL2 means: Flat = no compression, exact search. L2 = Euclidean distance metric
-    # This is the simplest FAISS index type
-    index = faiss.IndexFlatL2(dimension)
+    # With normalized vectors, inner product ranking is equivalent to cosine similarity
+    index = faiss.IndexFlatIP(dimension)
 
     # Add all embedding vectors into the FAISS index
     # Each vector becomes searchable
@@ -29,6 +38,7 @@ def build_faiss_index(embeddings: list[list[float]]):
 
 # Save the FAISS index to disk
 def save_faiss_index(index, path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     # write_index saves the binary FAISS index file
     # This allows us to reuse the index without rebuilding it
@@ -45,6 +55,7 @@ def load_faiss_index(path: Path):
 
 # Save the FAISS-to-chunk mapping to disk
 def save_mapping(mapping: list[dict], path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
 
     # Open the file in write mode with UTF-8 encoding
     with open(path, "w", encoding="utf-8") as f:
@@ -62,3 +73,9 @@ def load_mapping(path: Path):
 
         # Load the JSON mapping and return it
         return json.load(f)
+
+
+# Delete persisted FAISS files so the runtime can safely reload to an empty state
+def delete_faiss_artifacts(*paths: Path):
+    for path in paths:
+        path.unlink(missing_ok=True)

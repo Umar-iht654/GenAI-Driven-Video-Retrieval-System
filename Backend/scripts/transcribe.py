@@ -69,7 +69,42 @@ def choose_device_and_precision() -> tuple[str, str]:
         # CPU mode: int8 is typically faster and uses less memory than float32
         return "cpu", "int8"
 
+def transcribe_video(video_path: Path, model: WhisperModel) -> Path:
+    # Build output subtitle path using the same filename stem as the video
+    out_path = OUT_DIR / f"{video_path.stem}.vtt"
 
+    print(f"\nTranscribing: {video_path.name}")
+    print(f"Output:       {out_path.name}")
+
+    # Transcribe the video file
+    segments_iter, info = model.transcribe(
+        str(video_path),
+        beam_size=5,
+        vad_filter=True,
+    )
+
+    # Convert the generator into a list so it can be written to the .vtt file
+    segments = list(segments_iter)
+
+    # Write subtitle file to disk
+    write_vtt(segments, out_path)
+
+    # Print metadata for debugging/logging
+    print(f"Detected language: {info.language}")
+    print(f"Audio duration:    {info.duration:.1f}s")
+    print(f"Segments written:  {len(segments)}")
+    print("Done.")
+
+    return out_path
+
+def load_whisper_model(model_size: str = "medium") -> WhisperModel:
+    # Automatically choose device and precision
+    device, compute_type = choose_device_and_precision()
+
+    print(f"Device selected: {device} | compute_type: {compute_type} | model: {model_size}")
+
+    # Create and return the Whisper model
+    return WhisperModel(model_size, device=device, compute_type=compute_type)
 
 # Main transcription routine
 
@@ -81,45 +116,12 @@ def main():
             f"No .mp4 files found in {VIDEOS_DIR}. Put videos in Data/videos/"
         )
 
-    # Automatically choose GPU or CPU settings
-    device, compute_type = choose_device_and_precision()
-
-    #Set model size to medium for better accuracy for more technical lectures
-    #Can set to "small" for faster times but still has good accuracy
-    model_size = "medium"
-
-    print(f"Device selected: {device} | compute_type: {compute_type} | model: {model_size}")
-
-    # Create the Whisper model instance (this loads model weights)
-    model = WhisperModel(model_size, device=device, compute_type=compute_type)
+    # Load the Whisper model once and reuse it for all videos
+    model = load_whisper_model(model_size="medium")
 
     # Process every mp4 in Data/videos/
     for video_path in videos:
-        out_path = OUT_DIR / f"{video_path.stem}.vtt"
-
-        print(f"\nTranscribing: {video_path.name}")
-        print(f"Output:       {out_path.name}")
-
-        # Transcribe the video file
-        # beam_size: search width; higher can improve accuracy but slows down
-        # vad_filter: skips long silence sections (great for lectures)
-        segments_iter, info = model.transcribe(
-            str(video_path),
-            beam_size=5,
-            vad_filter=True,
-        )
-
-        # Consume the iterator to a list so we can write it once
-        segments = list(segments_iter)
-
-        # Write the subtitles to disk
-        write_vtt(segments, out_path)
-
-        # Print basic metadata for logging/debugging
-        print(f"Detected language: {info.language}")
-        print(f"Audio duration:    {info.duration:.1f}s")
-        print(f"Segments written:  {len(segments)}")
-        print("Done.")
+        transcribe_video(video_path, model)
 
 
 if __name__ == "__main__":

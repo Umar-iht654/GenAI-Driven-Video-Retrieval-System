@@ -1,27 +1,10 @@
-from app.db import chunks_collection
-from app.embeddingFactory import get_single_embedding_function
+from app.script_utils import generate_missing_embeddings
 
 
-# Use local embeddings for development
-embedding_function = get_single_embedding_function("local")
+def main():
+    updated_count = generate_missing_embeddings("local")
+    print(f"Generated local embeddings for {updated_count} chunks.")
 
 
-# Find chunks that do not yet have local embeddings
-chunks = list(chunks_collection.find({"local_embedding": {"$exists": False}}))
-
-print(f"Found {len(chunks)} chunks without local embeddings.")
-
-
-for chunk in chunks:
-    text = chunk["text"]
-
-    # Generate local embedding
-    embedding = embedding_function(text)
-
-    # Store embedding back in MongoDB
-    chunks_collection.update_one(
-        {"_id": chunk["_id"]},
-        {"$set": {"local_embedding": embedding}}
-    )
-
-print("Finished generating local embeddings.")
+if __name__ == "__main__":
+    main()

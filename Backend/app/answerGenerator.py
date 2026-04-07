@@ -7,17 +7,18 @@ from openai import OpenAI
 # This allows us to access things like OPENAI_API_KEY securely
 load_dotenv()
 
-# Read the OpenAI API key from environment variables
-api_key = os.getenv("OPENAI_API_KEY")
+class OpenAIServiceError(Exception):
+    pass
 
-# Stop the program if the API key was not found
-# This prevents the OpenAI client from being created without authentication
-if not api_key:
-    raise ValueError("OPENAI_API_KEY not found in environment variables.")
 
-# Create an OpenAI client using the API key
-# This client will be used to send requests to the OpenAI API
-client = OpenAI(api_key=api_key)
+def get_openai_client() -> OpenAI:
+    # Read the OpenAI API key from environment variables only when answer generation is needed
+    api_key = os.getenv("OPENAI_API_KEY")
+
+    if not api_key:
+        raise OpenAIServiceError("OPENAI_API_KEY is not configured on the backend.")
+
+    return OpenAI(api_key=api_key)
 
 NO_CONTEXT_ANSWER = "I could not find any relevant transcript chunks for that question."
 NO_CONTEXT_SUMMARY = "No relevant transcript context was retrieved, so I could not generate a grounded summary."
@@ -172,10 +173,15 @@ Summary: a brief plain-text summary in 2-4 sentences
 
     # Send the prompt to the OpenAI Responses API
     # gpt-4.1-mini generates the grounded answer based on the transcript context
-    response = client.responses.create(
-        model="gpt-4.1-mini",
-        input=prompt
-    )
+    try:
+        response = get_openai_client().responses.create(
+            model="gpt-4.1-mini",
+            input=prompt
+        )
+    except OpenAIServiceError:
+        raise
+    except Exception as exc:
+        raise OpenAIServiceError("OpenAI answer generation failed.") from exc
 
     # Return both:
     # 1. the generated answer text

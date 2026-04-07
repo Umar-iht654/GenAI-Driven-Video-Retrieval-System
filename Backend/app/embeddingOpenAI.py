@@ -7,21 +7,19 @@ from openai import OpenAI
 load_dotenv()
 
 
-# Read OpenAI API key from environment
-api_key = os.getenv("OPENAI_API_KEY") #not set up yet
+def get_openai_client() -> OpenAI:
+    # Read OpenAI API key only when OpenAI embeddings are requested
+    api_key = os.getenv("OPENAI_API_KEY")
 
-#throw error iif no API key
-if not api_key:
-    raise ValueError("OPENAI_API_KEY not found in environment variables.")
+    if not api_key:
+        raise ValueError("OPENAI_API_KEY not found in environment variables.")
 
-
-# Create OpenAI client
-client = OpenAI(api_key=api_key)
+    return OpenAI(api_key=api_key)
 
 
 # Generate an OpenAI embedding for a single piece of text
 def generate_openai_embedding(text: str, model: str = "text-embedding-3-small") -> list[float]:
-    response = client.embeddings.create(
+    response = get_openai_client().embeddings.create(
         model=model,
         input=text
     )
@@ -30,7 +28,7 @@ def generate_openai_embedding(text: str, model: str = "text-embedding-3-small") 
 
 # Generate OpenAI embeddings for multiple pieces of text
 def generate_openai_embeddings(texts: list[str], model: str = "text-embedding-3-small") -> list[list[float]]:
-    response = client.embeddings.create(
+    response = get_openai_client().embeddings.create(
         model=model,
         input=texts
     )
