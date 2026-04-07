@@ -4,6 +4,7 @@ from bson import ObjectId
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.faissIndex import load_faiss_index, load_mapping
 from app.embeddingFactory import get_single_embedding_function
@@ -30,6 +31,8 @@ INDEX_PATH = ROOT / "Data" / "faiss" / "local_index.faiss"
 
 # Define the path to the FAISS mapping file linking vectors to MongoDB chunks
 MAPPING_PATH = ROOT / "Data" / "faiss" / "local_mapping.json"
+# Define the path for the videos
+VIDEO_PATH = ROOT / "Data" / "videos"
 
 # Load the FAISS index once when the server starts to avoid reloading per request
 index = load_faiss_index(INDEX_PATH)
@@ -39,6 +42,7 @@ mapping = load_mapping(MAPPING_PATH)
 
 # Load the local embedding function once so it can be reused for all queries
 embed = get_single_embedding_function("local")
+app.mount("/videos", StaticFiles(directory=VIDEO_PATH), name="videos")
 
 # Define the structure of incoming POST request data using Pydantic
 class AskRequest(BaseModel):
@@ -47,6 +51,23 @@ class AskRequest(BaseModel):
     
     # Number of top chunks to retrieve from FAISS (default is 3)
     top_k: int = 3
+
+
+class AskResponse(BaseModel):
+    # Echo the original question
+    question: str
+
+    # Main plain-text answer returned by the model
+    answer: str
+
+    # Short plain-text summary returned separately for the frontend
+    summary: str
+
+    # Metadata for the chunks that grounded the answer
+    chunks_used: list[dict]
+
+    # Retrieved chunk previews returned for UI display and debugging
+    retrieved_chunks: list[dict]
 
 # Define a simple health check endpoint to verify the server is running
 @app.get("/health")
@@ -98,7 +119,7 @@ def retrieve_chunks(query: str, k: int = 3) -> list[dict]:
     return retrieved_chunks
 
 # Define the main API endpoint for asking questions
-@app.post("/ask")
+@app.post("/ask", response_model=AskResponse)
 def ask_question(request: AskRequest):
     # Retrieve relevant chunks using semantic search
     retrieved_chunks = retrieve_chunks(request.question, request.top_k)
@@ -113,6 +134,9 @@ def ask_question(request: AskRequest):
 
         # Return the generated answer text
         "answer": result["answer"],
+
+        # Return the generated summary text separately for the frontend
+        "summary": result["summary"],
 
         # Return metadata about which chunks were used for the answer
         "chunks_used": result["chunks_used"],

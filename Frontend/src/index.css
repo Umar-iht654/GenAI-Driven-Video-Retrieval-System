@@ -54,13 +54,15 @@ body {
 /* Apply the body font to buttons and inputs so the UI feels consistent */
 body,
 button,
-input {
+input,
+textarea {
   font-family: var(--font-body);
 }
 
 /* Make buttons and inputs inherit the current font settings */
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 

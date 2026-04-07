@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Sidebar from './components/Sidebar'
 import ChatWindow from './components/ChatWindow'
 import InputBox from './components/InputBox'
+import { loadChatState, persistChatState } from './utils/chatStorage'
+import { normalizeTimestamps } from './utils/timestamps'
 import './App.css'
 
 //Sets the number of transcript chunks to ask the backend for by default.
@@ -41,7 +43,7 @@ function createChatTitle(messageText) {
   return `${normalizedText.slice(0, 45).trim()}...`
 }
 
-// Build a short summary from the returned answer text so the UI can display a concise explanation
+// Build a short fallback summary if an older backend response does not include one yet
 function extractSummary(answer = '') {
   // Clean up whitespace to make sentence splitting more reliable
   const normalizedAnswer = answer.replace(/\s+/g, ' ').trim()
@@ -66,42 +68,47 @@ function extractSummary(answer = '') {
   return `${firstThought.slice(0, 177).trim()}...`
 }
 
-// Extract timestamp metadata from the backend response so the UI can show relevant lecture moments
-function extractTimestamps(response) {
-  // Prefer chunks_used, but fall back to retrieved_chunks if needed
-  const sourceChunks =
-    response.chunks_used?.length > 0
-      ? response.chunks_used
-      : response.retrieved_chunks ?? []
+function updateChatAndMoveToTop(chats, targetChatId, updateChat) {
+  const updatedChats = chats.map((chat) =>
+    chat.id === targetChatId ? updateChat(chat) : chat
+  )
 
-  // Use a set so duplicate chunk ids are not shown more than once
-  const seenChunkIds = new Set()
+  const targetChat = updatedChats.find((chat) => chat.id === targetChatId)
+  const remainingChats = updatedChats.filter((chat) => chat.id !== targetChatId)
 
-  // Filter unique chunks and limit the list to four timestamp cards
-  return sourceChunks
-    .filter((chunk) => {
-      // Skip invalid chunks or duplicates
-      if (!chunk?.chunk_id || seenChunkIds.has(chunk.chunk_id)) {
-        return false
-      }
-
-      // Record this chunk id as seen
-      seenChunkIds.add(chunk.chunk_id)
-      return true
-    })
-    .slice(0, 4)
+  return targetChat ? [targetChat, ...remainingChats] : updatedChats
 }
 
-// Create the first empty chat shown when the app loads
-const initialChat = createChat()
+function deleteChatAndResolveState(chats, activeChatId, chatIdToDelete, createChat) {
+  const remainingChats = chats.filter((chat) => chat.id !== chatIdToDelete)
+
+  if (remainingChats.length === 0) {
+    const freshChat = createChat()
+
+    return {
+      chats: [freshChat],
+      activeChatId: freshChat.id,
+    }
+  }
+
+  return {
+    chats: remainingChats,
+    activeChatId:
+      activeChatId === chatIdToDelete || !remainingChats.some((chat) => chat.id === activeChatId)
+        ? remainingChats[0].id
+        : activeChatId,
+  }
+}
 
 // Main React component for the frontend application
 function App() {
-  // Store all chat sessions in state and begin with one empty chat
-  const [chats, setChats] = useState([initialChat])
+  const [initialChatState] = useState(() => loadChatState(createChat))
+
+  // Store all chat sessions in state and begin with the restored chat history if it exists
+  const [chats, setChats] = useState(initialChatState.chats)
 
   // Track which chat is currently open in the main panel
-  const [activeChatId, setActiveChatId] = useState(initialChat.id)
+  const [activeChatId, setActiveChatId] = useState(initialChatState.activeChatId)
 
   // Track the current contents of the message input field
   const [inputValue, setInputValue] = useState('')
@@ -118,20 +125,28 @@ function App() {
   // Check specifically if the currently visible chat is the one loading
   const isActiveChatLoading = pendingChatId === activeChat?.id
 
+  useEffect(() => {
+    if (!chats.some((chat) => chat.id === activeChatId) && chats[0]) {
+      setActiveChatId(chats[0].id)
+    }
+  }, [activeChatId, chats])
+
+  useEffect(() => {
+    if (!activeChat?.id) {
+      return
+    }
+
+    persistChatState(chats, activeChatId ?? activeChat.id)
+  }, [activeChat?.id, activeChatId, chats])
+
   // Switch to a different chat when the user clicks it in the sidebar
   const handleSelectChat = (chatId) => {
     setActiveChatId(chatId)
     setInputValue('')
   }
 
-  // Create a new chat while preserving the current one if it already has messages
+  // Create a new chat while preserving every previous conversation
   const handleNewChat = () => {
-    // If the current chat is still empty, just clear the input and stay on it
-    if (activeChat?.messages.length === 0) {
-      setInputValue('')
-      return
-    }
-
     // Build a fresh empty chat object
     const newChat = createChat()
 
@@ -143,6 +158,21 @@ function App() {
 
     // Clear the input box for the fresh conversation
     setInputValue('')
+  }
+
+  // Delete a chat, keep history persisted, and always leave the UI with a valid active chat
+  const handleDeleteChat = (chatId) => {
+    const nextState = deleteChatAndResolveState(chats, activeChatId, chatId, createChat)
+
+    setChats(nextState.chats)
+    setActiveChatId(nextState.activeChatId)
+    setPendingChatId((currentPendingChatId) =>
+      currentPendingChatId === chatId ? null : currentPendingChatId
+    )
+
+    if (activeChatId === chatId) {
+      setInputValue('')
+    }
   }
 
   // Handle sending a user question to the backend and appending the response to the active chat
@@ -167,20 +197,11 @@ function App() {
 
     // Add the user's message to the correct chat and update the chat title if it is the first message
     setChats((currentChats) =>
-      currentChats.map((chat) => {
-        // Leave all other chats unchanged
-        if (chat.id !== targetChatId) {
-          return chat
-        }
-
-        // Update the active chat with the new user message
-        return {
-          ...chat,
-          title:
-            chat.messages.length === 0 ? createChatTitle(question) : chat.title,
-          messages: [...chat.messages, userMessage],
-        }
-      })
+      updateChatAndMoveToTop(currentChats, targetChatId, (chat) => ({
+        ...chat,
+        title: chat.messages.length === 0 ? createChatTitle(question) : chat.title,
+        messages: [...chat.messages, userMessage],
+      }))
     )
 
     // Clear the input box after submission
@@ -210,25 +231,24 @@ function App() {
       // Parse the JSON response from the backend
       const payload = await response.json()
 
-      // Build the assistant message using the backend answer and extracted summary/timestamps
+      // Build the assistant message using the backend answer, summary, and timestamps
       const assistantMessage = {
         id: createId(),
         role: 'assistant',
         answer: payload.answer,
-        summary: extractSummary(payload.answer),
-        timestamps: extractTimestamps(payload),
+        summary:
+          typeof payload.summary === 'string' && payload.summary.trim()
+            ? payload.summary
+            : extractSummary(payload.answer),
+        timestamps: normalizeTimestamps(payload),
       }
 
       // Append the assistant response to the same chat the user asked in
       setChats((currentChats) =>
-        currentChats.map((chat) =>
-          chat.id === targetChatId
-            ? {
-                ...chat,
-                messages: [...chat.messages, assistantMessage],
-              }
-            : chat
-        )
+        updateChatAndMoveToTop(currentChats, targetChatId, (chat) => ({
+          ...chat,
+          messages: [...chat.messages, assistantMessage],
+        }))
       )
     } catch (error) {
       // Create a fallback assistant message if the backend request fails
@@ -244,14 +264,10 @@ function App() {
 
       // Append the fallback error response to the active chat so the user sees feedback in the UI
       setChats((currentChats) =>
-        currentChats.map((chat) =>
-          chat.id === targetChatId
-            ? {
-                ...chat,
-                messages: [...chat.messages, fallbackMessage],
-              }
-            : chat
-        )
+        updateChatAndMoveToTop(currentChats, targetChatId, (chat) => ({
+          ...chat,
+          messages: [...chat.messages, fallbackMessage],
+        }))
       )
 
       // Log the real error in the browser console for debugging
@@ -272,10 +288,12 @@ function App() {
         activeChatId={activeChat?.id}
         onNewChat={handleNewChat}
         onSelectChat={handleSelectChat}
+        onDeleteChat={handleDeleteChat}
       />
 
       <main className="chat-panel">
         <ChatWindow
+          activeChatId={activeChat?.id}
           chatTitle={activeChat?.messages.length ? activeChat.title : 'New Chat'}
           messages={activeChat?.messages ?? []}
           isLoading={isActiveChatLoading}
