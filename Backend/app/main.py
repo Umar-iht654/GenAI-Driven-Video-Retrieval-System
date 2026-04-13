@@ -185,6 +185,15 @@ def ask_question(request: AskRequest, http_request: Request):
         top_k=request.top_k,
     )
 
+    if not retrieved_chunks:
+        return {
+            "question": request.question,
+            "answer": "I could not find a relevant lecture segment for that question.",
+            "summary": "The indexed lecture content does not appear to contain a strong enough match.",
+            "chunks_used": [],
+            "retrieved_chunks": [],
+        }
+
     # Generate an answer using the retrieved chunks and OpenAI
     result = generate_answer(request.question, retrieved_chunks)
 
